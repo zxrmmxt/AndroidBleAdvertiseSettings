@@ -30,18 +30,22 @@ import java.util.UUID;
  */
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class BleAdvertisingModel {
-    private static final String              TAG          = BleAdvertisingModel.class.getSimpleName();
+    private static final String              TAG                     = BleAdvertisingModel.class.getSimpleName();
     private static       BleAdvertisingModel sBleAdvertisingModel;
     /**
      * 00001000-0000-1000-8000-00805F9B34FB
      * 0000100A-0000-1000-8000-00805F9B34FB
+     * 广为人知的uuid
      */
-    private static final ParcelUuid          SERVICE_UUID = ParcelUuid.fromString("00001000-0000-1000-8000-00805F9B34FB");
+    private static final ParcelUuid          SERVICE_UUID_WELL_KNOWN = ParcelUuid.fromString("00001000-0000-1000-8000-00805F9B34FB");
 
-    private static String     ADVERTISER_SERVICE_UUID_BASE = "abcd";
-    private static ParcelUuid ADVERTISER_SERVICE_UUID      = ParcelUuid.fromString("0001"
+    private static String     ADVERTISER_SERVICE_UUID_BASE = "FFF5";
+    /**
+     * 自定义的uuid
+     */
+    private static ParcelUuid ADVERTISER_SERVICE_UUID      = ParcelUuid.fromString("0000"
                                                                                            + ADVERTISER_SERVICE_UUID_BASE
-                                                                                           + "-0405-0607-0809-0a0b0c0d0e0f");
+                                                                                           + "-0000-1000-8000-00805F9B34FB");
 
     private SampleAdvertiseCallback mAdvertiseCallback = new SampleAdvertiseCallback();
     private BluetoothLeAdvertiser   mBluetoothLeAdvertiser;
@@ -99,12 +103,12 @@ public class BleAdvertisingModel {
             serviceData = new byte[0];
         }
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
-        dataBuilder.addServiceUuid(SERVICE_UUID);
+        dataBuilder.addServiceUuid(ADVERTISER_SERVICE_UUID);
         //是否包含设备名称
         dataBuilder.setIncludeDeviceName(true);
         //是否包含发射功率级
         dataBuilder.setIncludeTxPowerLevel(false);
-        dataBuilder.addServiceData(SERVICE_UUID, serviceData);
+        dataBuilder.addServiceData(ADVERTISER_SERVICE_UUID, serviceData);
         return dataBuilder.build();
     }
 
@@ -123,7 +127,7 @@ public class BleAdvertisingModel {
                 //隐藏发射功率级别
                 .setIncludeTxPowerLevel(false)
                 //设置广播的服务UUID
-                .addServiceUuid(SERVICE_UUID)
+                .addServiceUuid(ADVERTISER_SERVICE_UUID)
                 //设置厂商数据
                 .addManufacturerData(manufacturerId, manufacturerSpecificData);
         return dataBuilder.build();
@@ -175,6 +179,7 @@ public class BleAdvertisingModel {
 
     /**
      * 开始蓝牙广播
+     *
      * @param name 广播蓝牙名称
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -220,7 +225,7 @@ public class BleAdvertisingModel {
         ScanFilter.Builder builder     = new ScanFilter.Builder();
         // Comment out the below line to see all BLE devices around you
         if (mBleAvertisingSettings.isScanFilterServiceUuid) {
-            builder.setServiceUuid(SERVICE_UUID);
+            builder.setServiceUuid(ADVERTISER_SERVICE_UUID);
         }
         scanFilters.add(builder.build());
         return scanFilters;
