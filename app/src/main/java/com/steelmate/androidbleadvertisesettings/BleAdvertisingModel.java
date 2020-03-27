@@ -39,6 +39,17 @@ public class BleAdvertisingModel {
      */
     private static final ParcelUuid          SERVICE_UUID_WELL_KNOWN = ParcelUuid.fromString("00001000-0000-1000-8000-00805F9B34FB");
 
+    /**
+     * 蓝牙广播中对服务 UUID 格式定义都有三种 16 bit UUID、32 bit UUID、128 bit UUID。
+     * 但是熟悉安卓开发的小伙伴都知道接口都 UUID 格式，fromString 时候 16bit 的 UUID 该咋办呢？
+     * 16bit 和 32bit 的 UUID 与 128bit 的值之间转换关系：
+     * 128_bit_UUID = 16_bit_UUID * 2^96 + Bluetooth_Base_UUID
+     * 128_bit_UUID = 32_bit_UUID * 2^96 + Bluetooth_Base_UUID
+     * 其中 Bluetooth_Base_UUID 定义为 00000000-0000-1000-8000-00805F9B34FB
+     * 如果你想说这是啥呀，那我这样说你应该可以明白点：
+     * 若 16 bit UUID为xxxx，那么 128 bit UUID 为 0000xxxx-0000-1000-8000-00805F9B34FB
+     * 若 32 bit UUID为xxxxxxxx，那么 128 bit UUID 为 xxxxxxxx-0000-1000-8000-00805F9B34FB
+     */
     private static String     ADVERTISER_SERVICE_UUID_BASE = "FFF5";
     /**
      * 自定义的uuid
