@@ -16,6 +16,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.ParcelUuid;
 import android.util.Log;
+import android.util.SparseArray;
 
 import androidx.annotation.RequiresApi;
 
@@ -279,6 +280,13 @@ public class BleAdvertisingModel {
 
             ScanRecord record = result.getScanRecord();
             if (record != null) {
+                {
+                    //其实已经解析好了
+                    String              deviceName                = record.getDeviceName();
+                    SparseArray<byte[]> manufacturerSpecificData  = record.getManufacturerSpecificData();
+                    byte[]              manufacturerSpecificData1 = record.getManufacturerSpecificData(0x0102);
+                    byte[]              serviceData               = record.getServiceData(ADVERTISER_SERVICE_UUID);
+                }
                 Log.e(TAG, "onScanResult ScanRecord = " + AppCommonConvertUtils.bytes2HexString(record.getBytes()));
                 ParsedAd parsedAd = null;
                 try {
