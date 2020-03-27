@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <CheckBox
+        android:id="@+id/checkBoxFilterUuid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="扫描时是否过滤ServiceUuid"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatSpinner
+        android:id="@+id/spinnerTxPowerLevel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/checkBoxFilterUuid" />
+
+    <Button
+        android:id="@+id/buttonLess"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="减少100"
+        app:layout_constraintBottom_toBottomOf="@id/editTextDuringRate"
+        app:layout_constraintEnd_toStartOf="@id/editTextDuringRate"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/editTextDuringRate" />
+
+    <EditText
+        android:id="@+id/editTextDuringRate"
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:text="50"
+        app:layout_constraintStart_toEndOf="@id/buttonLess"
+        android:gravity="end"
+        android:inputType="number"
+        app:layout_constraintEnd_toStartOf="@id/textVieweditTextDuring"
+        app:layout_constraintTop_toBottomOf="@id/spinnerTxPowerLevel" />
+
+    <TextView
+        android:id="@+id/textVieweditTextDuring"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="*100"
+        app:layout_constraintBottom_toBottomOf="@id/editTextDuringRate"
+        app:layout_constraintEnd_toStartOf="@id/buttonAdd"
+        app:layout_constraintStart_toEndOf="@id/editTextDuringRate"
+        app:layout_constraintTop_toTopOf="@id/editTextDuringRate" />
+
+    <Button
+        android:id="@+id/buttonAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="增加100"
+        app:layout_constraintBottom_toBottomOf="@id/editTextDuringRate"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/textVieweditTextDuring"
+        app:layout_constraintTop_toTopOf="@id/editTextDuringRate" />
+
+    <androidx.appcompat.widget.AppCompatSpinner
+        android:id="@+id/spinnerSendFrequency"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/editTextDuringRate" />
+    <androidx.appcompat.widget.AppCompatSpinner
+        android:id="@+id/spinnerReceiveFrequency"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/spinnerSendFrequency" />
+</androidx.constraintlayout.widget.ConstraintLayout>
