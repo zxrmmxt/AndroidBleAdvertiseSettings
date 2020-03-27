@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.ScanRecord;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -91,17 +92,22 @@ public class MainActivity extends AppCompatActivity {
 
         BleAdvertisingModel.getInstance().setOnReceiveCallback(new BleAdvertisingModel.OnReceiveCallback() {
             @Override
-            public void onReceive(String hexDataRaw, ParsedAd parsedAd) {
+            public void onReceive(ScanRecord record) {
+                String rawData = AppCommonConvertUtils.bytes2HexString(record.getBytes());
+                String serviceData       = AppCommonConvertUtils.bytes2HexString(record.getServiceData(BleAdvertisingModel.getAdvertiserServiceUuid()));
+                String manufacturerId = AppCommonConvertUtils.numberToHex(BleAdvertisingModel.getManufacturerId(), 2);
+                String manufacturerData = AppCommonConvertUtils.bytes2HexString(record.getManufacturerSpecificData(BleAdvertisingModel.getManufacturerId()));
+                String deviceName = record.getDeviceName();
                 mTextViewReceive.setText("接收的原始数据:" +
-                                                 "\n" + hexDataRaw +
+                                                 "\n" + rawData +
                                                  "\n" + "接收的serviceData数据:" +
-                                                 "\n" + AppCommonConvertUtils.bytes2HexString(parsedAd.serviceData) +
+                                                 "\n" + serviceData +
                                                  "\n" + "接收的manufacturerId:" +
-                                                 "\n" + AppCommonConvertUtils.numberToHex(parsedAd.manufacturerId, 2) +
+                                                 "\n" + manufacturerId +
                                                  "\n" + "接收的manufacturerData数据:" +
-                                                 "\n" + AppCommonConvertUtils.bytes2HexString(parsedAd.manufacturerData) +
-                                                 "\n" + "接收的localName数据:" +
-                                                 "\n" + parsedAd.localName
+                                                 "\n" + manufacturerData +
+                                                 "\n" + "接收的BLE的名称:" +
+                                                 "\n" + deviceName
                                         );
             }
         });

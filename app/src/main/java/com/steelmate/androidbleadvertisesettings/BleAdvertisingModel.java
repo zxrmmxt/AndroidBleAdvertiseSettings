@@ -51,13 +51,15 @@ public class BleAdvertisingModel {
      * 若 16 bit UUID为xxxx，那么 128 bit UUID 为 0000xxxx-0000-1000-8000-00805F9B34FB
      * 若 32 bit UUID为xxxxxxxx，那么 128 bit UUID 为 xxxxxxxx-0000-1000-8000-00805F9B34FB
      */
-    private static String     ADVERTISER_SERVICE_UUID_BASE = "FFF5";
+    private static final String     ADVERTISER_SERVICE_UUID_BASE = "FFF5";
     /**
      * 自定义的uuid
      */
-    private static ParcelUuid ADVERTISER_SERVICE_UUID      = ParcelUuid.fromString("0000"
-                                                                                           + ADVERTISER_SERVICE_UUID_BASE
-                                                                                           + "-0000-1000-8000-00805F9B34FB");
+    private static final ParcelUuid ADVERTISER_SERVICE_UUID      = ParcelUuid.fromString("0000" + ADVERTISER_SERVICE_UUID_BASE + "-0000-1000-8000-00805F9B34FB");
+    /**
+     * 厂商id，自己定义的2个字节的值
+     */
+    private static final short      MANUFACTURER_ID              = 0x0000;
 
     private SampleAdvertiseCallback mAdvertiseCallback = new SampleAdvertiseCallback();
     private BluetoothLeAdvertiser   mBluetoothLeAdvertiser;
@@ -132,7 +134,10 @@ public class BleAdvertisingModel {
      * @return
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private AdvertiseData buildScanResponse(int manufacturerId, byte[] manufacturerSpecificData) {
+    private AdvertiseData buildScanResponse(short manufacturerId, byte[] manufacturerSpecificData) {
+        if (manufacturerSpecificData == null) {
+            manufacturerSpecificData = new byte[0];
+        }
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder()
                 //是否包含设备名称
                 .setIncludeDeviceName(true)
@@ -185,7 +190,7 @@ public class BleAdvertisingModel {
      * 开始蓝牙广播
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertising(byte[] serviceData, int manufacturerId, byte[] manufacturerSpecificData) {
+    public void startAdvertising(byte[] serviceData, short manufacturerId, byte[] manufacturerSpecificData) {
         startAdvertising(serviceData, buildScanResponse(manufacturerId, manufacturerSpecificData));
     }
 
@@ -277,25 +282,18 @@ public class BleAdvertisingModel {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-
+            if (result == null) {
+                return;
+            }
+            //扫描到的广播数据
             ScanRecord record = result.getScanRecord();
             if (record != null) {
-                {
-                    //其实已经解析好了
-                    String              deviceName                = record.getDeviceName();
-                    SparseArray<byte[]> manufacturerSpecificData  = record.getManufacturerSpecificData();
-                    byte[]              manufacturerSpecificData1 = record.getManufacturerSpecificData(0x0102);
-                    byte[]              serviceData               = record.getServiceData(ADVERTISER_SERVICE_UUID);
-                }
-                Log.e(TAG, "onScanResult ScanRecord = " + AppCommonConvertUtils.bytes2HexString(record.getBytes()));
-                ParsedAd parsedAd = null;
                 try {
-                    parsedAd = parseData(record.getBytes());
-                    Log.e(TAG, "onScanResult serviceData = " + parsedAd);
+                    Log.e(TAG, "onScanResult ScanRecord = " + record.toString());
+                    if (mOnReceiveCallback != null) {
+                        mOnReceiveCallback.onReceive(record);
+                    }
                 } catch (Exception e) {
-                }
-                if (mOnReceiveCallback != null) {
-                    mOnReceiveCallback.onReceive(AppCommonConvertUtils.bytes2HexString(record.getBytes()), parsedAd);
                 }
             }
         }
@@ -309,6 +307,8 @@ public class BleAdvertisingModel {
     }
 
     /**
+     * 此方法不必调用，只是为了了解BLE广播的数据结构
+     * <p>
      * 广播包中包含若干个广播数据单元，广播数据单元也称为 AD Structure。
      * 广播数据单元 = 长度值Length + AD type + AD Data。
      * 03 03 0010 第一个字节的值是0x03,转换为十进制就是3，表示后面3字节为广播数据单元的数据内容。
@@ -425,7 +425,7 @@ public class BleAdvertisingModel {
     }
 
     public interface OnReceiveCallback {
-        void onReceive(String hexDataRaw, ParsedAd parsedAd);
+        void onReceive(ScanRecord record);
     }
 
     public class BleAvertisingSettings {
@@ -509,5 +509,13 @@ public class BleAdvertisingModel {
 
     public BleAvertisingSettings getBleAvertisingSettings() {
         return mBleAvertisingSettings;
+    }
+
+    public static ParcelUuid getAdvertiserServiceUuid() {
+        return ADVERTISER_SERVICE_UUID;
+    }
+
+    public static short getManufacturerId() {
+        return MANUFACTURER_ID;
     }
 }
