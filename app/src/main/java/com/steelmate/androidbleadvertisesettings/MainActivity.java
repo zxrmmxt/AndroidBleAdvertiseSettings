@@ -94,12 +94,12 @@ public class MainActivity extends AppCompatActivity {
         BleAdvertisingModel.getInstance().setOnReceiveCallback(new BleAdvertisingModel.OnReceiveCallback() {
             @Override
             public void onReceive(ScanRecord record) {
-                String rawData = AppCommonConvertUtils.bytes2HexString(record.getBytes());
-                String serviceData       = AppCommonConvertUtils.bytes2HexString(record.getServiceData(BleAdvertisingModel.getAdvertiserServiceUuid()));
-                String manufacturerId = AppCommonConvertUtils.numberToHex(BleAdvertisingModel.getManufacturerId(), 2);
+                String rawData          = AppCommonConvertUtils.bytes2HexString(record.getBytes());
+                String serviceData      = AppCommonConvertUtils.bytes2HexString(record.getServiceData(BleAdvertisingModel.getAdvertiserServiceUuid()));
+                String manufacturerId   = AppCommonConvertUtils.numberToHex(BleAdvertisingModel.getManufacturerId(), 2);
                 String manufacturerData = AppCommonConvertUtils.bytes2HexString(record.getManufacturerSpecificData(BleAdvertisingModel.getManufacturerId()));
-                String deviceName = record.getDeviceName();
-                byte[] bytes = deviceName.getBytes(StandardCharsets.ISO_8859_1);
+                String deviceName       = record.getDeviceName();
+                byte[] bytes            = deviceName.getBytes(StandardCharsets.ISO_8859_1);
                 mTextViewReceive.setText("接收的原始数据:" +
                                                  "\n" + rawData +
                                                  "\n" + "接收的serviceData数据:" +
@@ -137,7 +137,8 @@ public class MainActivity extends AppCompatActivity {
                 if (bytes == null) {
                     return;
                 }
-                BleAdvertisingModel.getInstance().startAdvertising(new String(bytes, StandardCharsets.ISO_8859_1));
+                String name = new String(bytes, StandardCharsets.ISO_8859_1);
+                BleAdvertisingModel.getInstance().startAdvertising(name);
             }
         }
     };
