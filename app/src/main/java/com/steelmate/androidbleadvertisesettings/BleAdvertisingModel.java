@@ -16,7 +16,6 @@ import android.content.Context;
 import android.os.Build;
 import android.os.ParcelUuid;
 import android.util.Log;
-import android.util.SparseArray;
 
 import androidx.annotation.RequiresApi;
 
