@@ -50,15 +50,15 @@ public class BleAdvertisingModel {
      * 若 16 bit UUID为xxxx，那么 128 bit UUID 为 0000xxxx-0000-1000-8000-00805F9B34FB
      * 若 32 bit UUID为xxxxxxxx，那么 128 bit UUID 为 xxxxxxxx-0000-1000-8000-00805F9B34FB
      */
-    private static final String     ADVERTISER_SERVICE_UUID_BASE = "FFF6";
-    /**
-     * 自定义的uuid
-     */
-    private static final ParcelUuid ADVERTISER_SERVICE_UUID      = ParcelUuid.fromString("0000" + ADVERTISER_SERVICE_UUID_BASE + "-0000-1000-8000-00805F9B34FB");
+    private static final ParcelUuid ADVERTISE_SERVICE_UUID          = getParcelUuid("FFF6");
+    private static final ParcelUuid ADVERTISER_SERVICE_DATA_UUID    = getParcelUuid("FFF7");
+    private static final ParcelUuid SCAN_RESPONSE_SERVICE_UUID      = getParcelUuid("FFF8");
+    private static final ParcelUuid SCAN_RESPONSE_SERVICE_DATA_UUID = getParcelUuid("FFF9");
+
     /**
      * 厂商id，自己定义的2个字节的值
      */
-    private static final short      MANUFACTURER_ID              = 0x0000;
+    private static final short MANUFACTURER_ID = 0x0102;
 
     private SampleAdvertiseCallback mAdvertiseCallback = new SampleAdvertiseCallback();
     private BluetoothLeAdvertiser   mBluetoothLeAdvertiser;
@@ -105,55 +105,13 @@ public class BleAdvertisingModel {
     }
 
     /**
-     * 广播包（Advertising Data）
-     *
-     * @param serviceData 最大长度为23的字节数组
-     * @return
-     */
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private AdvertiseData buildAdvertiseData(byte[] serviceData) {
-        if (serviceData == null) {
-            serviceData = new byte[0];
-        }
-        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
-        dataBuilder.addServiceUuid(ADVERTISER_SERVICE_UUID);
-        //是否包含设备名称
-        dataBuilder.setIncludeDeviceName(true);
-        //是否包含发射功率级
-        dataBuilder.setIncludeTxPowerLevel(false);
-        dataBuilder.addServiceData(ADVERTISER_SERVICE_UUID, serviceData);
-        return dataBuilder.build();
-    }
-
-    /**
-     * 响应包（Scan Response）
-     *
-     * @param manufacturerId           厂商id,两个字节表示
-     * @param manufacturerSpecificData 厂商数据
-     * @return
-     */
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private AdvertiseData buildScanResponse(short manufacturerId, byte[] manufacturerSpecificData) {
-        if (manufacturerSpecificData == null) {
-            manufacturerSpecificData = new byte[0];
-        }
-        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder()
-                //是否包含设备名称
-                .setIncludeDeviceName(true)
-                //隐藏发射功率级别
-                .setIncludeTxPowerLevel(false)
-                //设置广播的服务UUID
-                .addServiceUuid(ADVERTISER_SERVICE_UUID)
-                //设置厂商数据
-                .addManufacturerData(manufacturerId, manufacturerSpecificData);
-        return dataBuilder.build();
-    }
-
-    /**
      * 开始蓝牙广播
+     *
+     * @param advertiseData 广播包
+     * @param scanResponse  响应包，可以和广播包一模一样
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertising(byte[] serviceData, AdvertiseData scanResponse) {
+    public void startAdvertising(AdvertiseData advertiseData, AdvertiseData scanResponse) {
         if (mBluetoothAdapter != null) {
             if (!mBluetoothAdapter.isEnabled()) {
                 MyToastUtils.showShortToast("蓝牙未开启");
@@ -172,36 +130,71 @@ public class BleAdvertisingModel {
         }
         if (mBluetoothLeAdvertiser != null) {
             mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
-            AdvertiseSettings settings = buildAdvertiseSettings();
-            mBluetoothLeAdvertiser.startAdvertising(settings, buildAdvertiseData(serviceData), scanResponse, mAdvertiseCallback);
+            mBluetoothLeAdvertiser.startAdvertising(buildAdvertiseSettings(), advertiseData, scanResponse, mAdvertiseCallback);
         }
     }
 
     /**
      * 开始蓝牙广播
+     *
+     * @param serviceData 最大长度为23的字节数组
+     * @return <p>
+     * {@link AdvertiseData.Builder#addServiceUuid(ParcelUuid)} List<ParcelUuid> mServiceUuids，可以添加多个
+     * {@link AdvertiseData.Builder#addServiceData(ParcelUuid, byte[])} Map<ParcelUuid, byte[]> mServiceData，可以添加多个
+     * {@link AdvertiseData.Builder#addManufacturerData(int, byte[])} SparseArray<byte[]> mManufacturerSpecificData，可以添加多个
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void startAdvertising(byte[] serviceData) {
-        startAdvertising(serviceData, null);
+        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
+        //是否包含设备名称
+        dataBuilder.setIncludeDeviceName(false);
+//        mBluetoothAdapter.setName("徐题");
+        //是否包含发射功率级
+        dataBuilder.setIncludeTxPowerLevel(false);
+        dataBuilder.addServiceUuid(getAdvertiseServiceUuid());
+        if (serviceData == null) {
+            serviceData = new byte[0];
+        }
+        dataBuilder.addServiceData(getAdvertiserServiceDataUuid(), serviceData);
+        startAdvertising(dataBuilder.build(), null);
     }
 
     /**
      * 开始蓝牙广播
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertising(byte[] serviceData, short manufacturerId, byte[] manufacturerSpecificData) {
-        startAdvertising(serviceData, buildScanResponse(manufacturerId, manufacturerSpecificData));
+    public void startAdvertising(short manufacturerId, byte[] manufacturerSpecificData) {
+        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
+        //是否包含设备名称
+        dataBuilder.setIncludeDeviceName(false);
+        //是否包含发射功率级
+        dataBuilder.setIncludeTxPowerLevel(false);
+        dataBuilder.addServiceUuid(getAdvertiseServiceUuid());
+        if (manufacturerSpecificData == null) {
+            manufacturerSpecificData = new byte[0];
+        }
+        if (manufacturerSpecificData == null) {
+            manufacturerSpecificData = new byte[0];
+        }
+        dataBuilder.addManufacturerData(manufacturerId, manufacturerSpecificData);
+        startAdvertising(dataBuilder.build(), null);
     }
 
     /**
      * 开始蓝牙广播
      *
-     * @param name 广播蓝牙名称
+     * @param name 广播蓝牙名称，用16进制字符串，不然字节会丢失
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void startAdvertising(String name) {
+        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
+        //是否包含设备名称
+        dataBuilder.setIncludeDeviceName(false);
         mBluetoothAdapter.setName(name);
-        startAdvertising(null, null);
+        //是否包含发射功率级
+        dataBuilder.setIncludeTxPowerLevel(false);
+        dataBuilder.addServiceUuid(getAdvertiseServiceUuid());
+        startAdvertising(dataBuilder.build(), null);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -241,7 +234,7 @@ public class BleAdvertisingModel {
         ScanFilter.Builder builder     = new ScanFilter.Builder();
         // Comment out the below line to see all BLE devices around you
         if (mBleAvertisingSettings.isScanFilterServiceUuid) {
-            builder.setServiceUuid(ADVERTISER_SERVICE_UUID);
+            builder.setServiceUuid(getAdvertiseServiceUuid());
         }
         scanFilters.add(builder.build());
         return scanFilters;
@@ -510,8 +503,24 @@ public class BleAdvertisingModel {
         return mBleAvertisingSettings;
     }
 
-    public static ParcelUuid getAdvertiserServiceUuid() {
-        return ADVERTISER_SERVICE_UUID;
+    private static ParcelUuid getParcelUuid(String uuid16Bit) {
+        return ParcelUuid.fromString("0000" + uuid16Bit + "-0000-1000-8000-00805F9B34FB");
+    }
+
+    public static ParcelUuid getAdvertiseServiceUuid() {
+        return ADVERTISE_SERVICE_UUID;
+    }
+
+    public static ParcelUuid getAdvertiserServiceDataUuid() {
+        return ADVERTISER_SERVICE_DATA_UUID;
+    }
+
+    public static ParcelUuid getScanResponseServiceUuid() {
+        return SCAN_RESPONSE_SERVICE_UUID;
+    }
+
+    public static ParcelUuid getScanResponseServiceDataUuid() {
+        return SCAN_RESPONSE_SERVICE_DATA_UUID;
     }
 
     public static short getManufacturerId() {
