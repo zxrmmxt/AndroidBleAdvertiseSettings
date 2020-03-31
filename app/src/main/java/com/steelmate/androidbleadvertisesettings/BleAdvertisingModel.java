@@ -151,7 +151,7 @@ public class BleAdvertisingModel {
 //        mBluetoothAdapter.setName("徐题");
         //是否包含发射功率级
         dataBuilder.setIncludeTxPowerLevel(false);
-        dataBuilder.addServiceUuid(getAdvertiseServiceUuid());
+//        dataBuilder.addServiceUuid(getAdvertiseServiceUuid());
         if (serviceData == null) {
             serviceData = new byte[0];
         }
@@ -424,7 +424,7 @@ public class BleAdvertisingModel {
         /**
          * 扫描时是否过滤serviceUUID
          */
-        private boolean isScanFilterServiceUuid = true;
+        private boolean isScanFilterServiceUuid = false;
         /**
          * 发送广播的功率
          */
