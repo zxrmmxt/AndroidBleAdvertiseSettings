@@ -182,14 +182,14 @@ public class BleAdvertisingModel {
      * {@link AdvertiseData.Builder#addManufacturerData(int, byte[])} SparseArray<byte[]> mManufacturerSpecificData，可以添加多个
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertising(ParcelUuid serviceDataUuid, byte[] serviceData) {
+    public void startAdvertising(ParcelUuid serviceUuid,ParcelUuid serviceDataUuid, byte[] serviceData) {
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
         //是否包含设备名称
         dataBuilder.setIncludeDeviceName(false);
-//        mBluetoothAdapter.setName("徐题");
+//        mBluetoothAdapter.setName("xxxx");
         //是否包含发射功率级
         dataBuilder.setIncludeTxPowerLevel(false);
-//        dataBuilder.addServiceUuid(getAdvertiseServiceUuid());
+        dataBuilder.addServiceUuid(serviceUuid);
         if (serviceData == null) {
             serviceData = new byte[0];
         }
