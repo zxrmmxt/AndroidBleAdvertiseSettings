@@ -57,8 +57,9 @@ public class BleAdvertisingModel {
 
     /**
      * 厂商id，自己定义的2个字节的值
+     * 如果定义成short，最高位是负数会出异常
      */
-    private static final short MANUFACTURER_ID = 0x0102;
+    private static final int MANUFACTURER_ID = 0xFFF1;
 
     private SampleAdvertiseCallback mAdvertiseCallback = new SampleAdvertiseCallback();
     private BluetoothLeAdvertiser   mBluetoothLeAdvertiser;
@@ -144,7 +145,44 @@ public class BleAdvertisingModel {
      * {@link AdvertiseData.Builder#addManufacturerData(int, byte[])} SparseArray<byte[]> mManufacturerSpecificData，可以添加多个
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertising(byte[] serviceData) {
+    public void startAdvertising(String name, ParcelUuid serviceUuid, ParcelUuid serviceDataUuid, byte[] serviceData, int manufacturerId, byte[] manufacturerSpecificData) {
+        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
+        //是否包含设备名称
+        dataBuilder.setIncludeDeviceName(false);
+        mBluetoothAdapter.setName(name);
+        //是否包含发射功率级
+        dataBuilder.setIncludeTxPowerLevel(false);
+        {
+            dataBuilder.addServiceUuid(serviceUuid);
+        }
+        {
+            if (serviceData == null) {
+                serviceData = new byte[0];
+            }
+            dataBuilder.addServiceData(serviceDataUuid, serviceData);
+        }
+        {
+            if (manufacturerSpecificData == null) {
+                manufacturerSpecificData = new byte[0];
+            }
+            dataBuilder.addManufacturerData(manufacturerId, manufacturerSpecificData);
+        }
+
+        AdvertiseData advertiseData = dataBuilder.build();
+        startAdvertising(advertiseData, null);
+    }
+
+    /**
+     * 开始蓝牙广播
+     *
+     * @param serviceData 最大长度为23的字节数组
+     * @return <p>
+     * {@link AdvertiseData.Builder#addServiceUuid(ParcelUuid)} List<ParcelUuid> mServiceUuids，可以添加多个
+     * {@link AdvertiseData.Builder#addServiceData(ParcelUuid, byte[])} Map<ParcelUuid, byte[]> mServiceData，可以添加多个
+     * {@link AdvertiseData.Builder#addManufacturerData(int, byte[])} SparseArray<byte[]> mManufacturerSpecificData，可以添加多个
+     */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void startAdvertising(ParcelUuid serviceDataUuid, byte[] serviceData) {
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
         //是否包含设备名称
         dataBuilder.setIncludeDeviceName(false);
@@ -155,24 +193,22 @@ public class BleAdvertisingModel {
         if (serviceData == null) {
             serviceData = new byte[0];
         }
-        dataBuilder.addServiceData(getAdvertiserServiceDataUuid(), serviceData);
-        startAdvertising(dataBuilder.build(), null);
+        dataBuilder.addServiceData(serviceDataUuid, serviceData);
+        AdvertiseData advertiseData = dataBuilder.build();
+        startAdvertising(advertiseData, null);
     }
 
     /**
      * 开始蓝牙广播
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertising(short manufacturerId, byte[] manufacturerSpecificData) {
+    public void startAdvertising(int manufacturerId, byte[] manufacturerSpecificData) {
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
         //是否包含设备名称
         dataBuilder.setIncludeDeviceName(false);
         //是否包含发射功率级
         dataBuilder.setIncludeTxPowerLevel(false);
         dataBuilder.addServiceUuid(getAdvertiseServiceUuid());
-        if (manufacturerSpecificData == null) {
-            manufacturerSpecificData = new byte[0];
-        }
         if (manufacturerSpecificData == null) {
             manufacturerSpecificData = new byte[0];
         }
@@ -424,7 +460,7 @@ public class BleAdvertisingModel {
         /**
          * 扫描时是否过滤serviceUUID
          */
-        private boolean isScanFilterServiceUuid = false;
+        private boolean isScanFilterServiceUuid = true;
         /**
          * 发送广播的功率
          */
@@ -523,7 +559,7 @@ public class BleAdvertisingModel {
         return SCAN_RESPONSE_SERVICE_DATA_UUID;
     }
 
-    public static short getManufacturerId() {
+    public static int getManufacturerId() {
         return MANUFACTURER_ID;
     }
 }

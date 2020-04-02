@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
                 if (bytes == null) {
                     return;
                 }
-                BleAdvertisingModel.getInstance().startAdvertising(bytes);
+                BleAdvertisingModel.getInstance().startAdvertising(BleAdvertisingModel.getAdvertiserServiceDataUuid(), bytes);
             }
         }
     };
