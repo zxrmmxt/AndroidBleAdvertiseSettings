@@ -1,5 +1,6 @@
 package com.steelmate.androidbleadvertisesettings;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.AdvertiseCallback;
@@ -9,10 +10,10 @@ import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
-import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.ParcelUuid;
 import android.util.Log;
@@ -50,22 +51,51 @@ public class BleAdvertisingModel {
      * 若 16 bit UUID为xxxx，那么 128 bit UUID 为 0000xxxx-0000-1000-8000-00805F9B34FB
      * 若 32 bit UUID为xxxxxxxx，那么 128 bit UUID 为 xxxxxxxx-0000-1000-8000-00805F9B34FB
      */
-    private static final ParcelUuid ADVERTISE_SERVICE_UUID          = getParcelUuid("FFF6");
-    private static final ParcelUuid ADVERTISER_SERVICE_DATA_UUID    = getParcelUuid("FFF7");
-    private static final ParcelUuid SCAN_RESPONSE_SERVICE_UUID      = getParcelUuid("FFF8");
-    private static final ParcelUuid SCAN_RESPONSE_SERVICE_DATA_UUID = getParcelUuid("FFF9");
+    public static final ParcelUuid ADVERTISE_SERVICE_UUID          = getParcelUuid("FFF6");
+    public static final ParcelUuid ADVERTISER_SERVICE_DATA_UUID    = getParcelUuid("FFF7");
+    public static final ParcelUuid SCAN_RESPONSE_SERVICE_UUID      = getParcelUuid("FFF8");
+    public static final ParcelUuid SCAN_RESPONSE_SERVICE_DATA_UUID = getParcelUuid("FFF9");
 
     /**
      * 厂商id，自己定义的2个字节的值
      * 如果定义成short，最高位是负数会出异常
      */
-    private static final int MANUFACTURER_ID = 0xFFF1;
+    public static final int MANUFACTURER_ID = 0xFFF1;
+
+    /**
+     * 1[0x03中的uuid]
+     * 2[扫描过滤的uuid]
+     */
+    private ParcelUuid mServiceUuid;
+    private ParcelUuid mServiceDataUuid;
+    private int        mManufacturerId;
 
     private SampleAdvertiseCallback mAdvertiseCallback = new SampleAdvertiseCallback();
     private BluetoothLeAdvertiser   mBluetoothLeAdvertiser;
     private BluetoothLeScanner      mBluetoothLeScanner;
-    private SampleScanCallback      mScanCallback      = new SampleScanCallback();
-    private OnReceiveCallback       mOnReceiveCallback;
+    private ScanCallback            mInnerScanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+            if (result == null) {
+                return;
+            }
+            if (mScanCallback != null) {
+                mScanCallback.onScanResult(callbackType, result);
+            }
+        }
+
+        @Override
+        public void onBatchScanResults(List<ScanResult> results) {
+            super.onBatchScanResults(results);
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
+            super.onScanFailed(errorCode);
+        }
+    };
+    private ScanCallback            mScanCallback;
 
     private BleAvertisingSettings mBleAvertisingSettings = new BleAvertisingSettings();
     private BluetoothAdapter      mBluetoothAdapter;
@@ -83,6 +113,32 @@ public class BleAdvertisingModel {
             sBleAdvertisingModel = new BleAdvertisingModel();
         }
         return sBleAdvertisingModel;
+    }
+
+    /**
+     * 此方法是初始化方法，在{@link android.app.Application#onCreate}方法中调用
+     */
+    public void init(ParcelUuid serviceUuid, ParcelUuid serviceDataUuid, int manufacturerId) {
+        mServiceUuid = serviceUuid;
+        mServiceDataUuid = serviceDataUuid;
+        mManufacturerId = manufacturerId;
+    }
+
+    public void enable(Activity activity, int requestCode) {
+        if (mBluetoothAdapter != null) {
+            if (!mBluetoothAdapter.isEnabled()) {
+                Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                activity.startActivityForResult(intent, requestCode);
+            }
+        }
+    }
+
+    public boolean isEnabled() {
+        if (mBluetoothAdapter != null) {
+            return mBluetoothAdapter.isEnabled();
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -145,29 +201,20 @@ public class BleAdvertisingModel {
      * {@link AdvertiseData.Builder#addManufacturerData(int, byte[])} SparseArray<byte[]> mManufacturerSpecificData，可以添加多个
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertising(String name, ParcelUuid serviceUuid, ParcelUuid serviceDataUuid, byte[] serviceData, int manufacturerId, byte[] manufacturerSpecificData) {
+    public void startAdvertisingServiceData(ParcelUuid serviceUuid, byte[] serviceData) {
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
         //是否包含设备名称
         dataBuilder.setIncludeDeviceName(false);
-        mBluetoothAdapter.setName(name);
+//        mBluetoothAdapter.setName("xxxx");
         //是否包含发射功率级
         dataBuilder.setIncludeTxPowerLevel(false);
-        {
+        if (serviceUuid != null) {
             dataBuilder.addServiceUuid(serviceUuid);
         }
-        {
-            if (serviceData == null) {
-                serviceData = new byte[0];
-            }
-            dataBuilder.addServiceData(serviceDataUuid, serviceData);
+        if (serviceData == null) {
+            serviceData = new byte[0];
         }
-        {
-            if (manufacturerSpecificData == null) {
-                manufacturerSpecificData = new byte[0];
-            }
-            dataBuilder.addManufacturerData(manufacturerId, manufacturerSpecificData);
-        }
-
+        dataBuilder.addServiceData(mServiceDataUuid, serviceData);
         AdvertiseData advertiseData = dataBuilder.build();
         startAdvertising(advertiseData, null);
     }
@@ -182,37 +229,54 @@ public class BleAdvertisingModel {
      * {@link AdvertiseData.Builder#addManufacturerData(int, byte[])} SparseArray<byte[]> mManufacturerSpecificData，可以添加多个
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertising(ParcelUuid serviceUuid,ParcelUuid serviceDataUuid, byte[] serviceData) {
-        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
-        //是否包含设备名称
-        dataBuilder.setIncludeDeviceName(false);
-//        mBluetoothAdapter.setName("xxxx");
-        //是否包含发射功率级
-        dataBuilder.setIncludeTxPowerLevel(false);
-        dataBuilder.addServiceUuid(serviceUuid);
-        if (serviceData == null) {
-            serviceData = new byte[0];
-        }
-        dataBuilder.addServiceData(serviceDataUuid, serviceData);
-        AdvertiseData advertiseData = dataBuilder.build();
-        startAdvertising(advertiseData, null);
+    public void startAdvertisingServiceData(byte[] serviceData) {
+        startAdvertisingServiceData(null, serviceData);
     }
 
     /**
      * 开始蓝牙广播
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertising(int manufacturerId, byte[] manufacturerSpecificData) {
+    public void startAdvertisingManufacturerData(ParcelUuid serviceUuid, byte[] manufacturerSpecificData) {
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
         //是否包含设备名称
         dataBuilder.setIncludeDeviceName(false);
         //是否包含发射功率级
         dataBuilder.setIncludeTxPowerLevel(false);
-        dataBuilder.addServiceUuid(getAdvertiseServiceUuid());
+        if (serviceUuid != null) {
+            dataBuilder.addServiceUuid(serviceUuid);
+        }
         if (manufacturerSpecificData == null) {
             manufacturerSpecificData = new byte[0];
         }
-        dataBuilder.addManufacturerData(manufacturerId, manufacturerSpecificData);
+        dataBuilder.addManufacturerData(mManufacturerId, manufacturerSpecificData);
+        startAdvertising(dataBuilder.build(), null);
+    }
+
+    /**
+     * 开始蓝牙广播
+     */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void startAdvertisingManufacturerData(byte[] manufacturerSpecificData) {
+        startAdvertisingManufacturerData(null, manufacturerSpecificData);
+    }
+
+    /**
+     * 开始蓝牙广播
+     *
+     * @param name 广播蓝牙名称，用16进制字符串，不然字节会丢失
+     */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void startAdvertisingName(ParcelUuid serviceUuid, String name) {
+        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
+        //是否包含设备名称
+        dataBuilder.setIncludeDeviceName(false);
+        mBluetoothAdapter.setName(name);
+        //是否包含发射功率级
+        dataBuilder.setIncludeTxPowerLevel(false);
+        if (serviceUuid != null) {
+            dataBuilder.addServiceUuid(serviceUuid);
+        }
         startAdvertising(dataBuilder.build(), null);
     }
 
@@ -222,15 +286,8 @@ public class BleAdvertisingModel {
      * @param name 广播蓝牙名称，用16进制字符串，不然字节会丢失
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertising(String name) {
-        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
-        //是否包含设备名称
-        dataBuilder.setIncludeDeviceName(false);
-        mBluetoothAdapter.setName(name);
-        //是否包含发射功率级
-        dataBuilder.setIncludeTxPowerLevel(false);
-        dataBuilder.addServiceUuid(getAdvertiseServiceUuid());
-        startAdvertising(dataBuilder.build(), null);
+    public void startAdvertisingName(String name) {
+        startAdvertisingName(null, name);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -265,19 +322,21 @@ public class BleAdvertisingModel {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private List<ScanFilter> buildScanFilters() {
+    private List<ScanFilter> buildScanFilters(ParcelUuid serviceUuid) {
         List<ScanFilter>   scanFilters = new ArrayList<>();
         ScanFilter.Builder builder     = new ScanFilter.Builder();
         // Comment out the below line to see all BLE devices around you
         if (mBleAvertisingSettings.isScanFilterServiceUuid) {
-            builder.setServiceUuid(getAdvertiseServiceUuid());
+            if (serviceUuid != null) {
+                builder.setServiceUuid(serviceUuid);
+            }
         }
         scanFilters.add(builder.build());
         return scanFilters;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startScanning() {
+    private void startScanning(ParcelUuid serviceUuid) {
         if (mBluetoothAdapter != null) {
             if (!mBluetoothAdapter.isEnabled()) {
                 MyToastUtils.showShortToast("蓝牙未开启");
@@ -291,47 +350,22 @@ public class BleAdvertisingModel {
             }
         }
         if (mBluetoothLeScanner != null) {
-            mBluetoothLeScanner.stopScan(mScanCallback);
+            mBluetoothLeScanner.stopScan(mInnerScanCallback);
             if (mBleAvertisingSettings.isScan()) {
-                mBluetoothLeScanner.startScan(buildScanFilters(), buildScanSettings(), mScanCallback);
+                mBluetoothLeScanner.startScan(buildScanFilters(serviceUuid), buildScanSettings(), mInnerScanCallback);
                 Log.d(TAG, "Starting Scanning");
             }
         }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private class SampleScanCallback extends ScanCallback {
+    public void startScanning() {
+        startScanning(null);
+    }
 
-        @Override
-        public void onBatchScanResults(List<ScanResult> results) {
-            super.onBatchScanResults(results);
-        }
-
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            super.onScanResult(callbackType, result);
-            if (result == null) {
-                return;
-            }
-            //扫描到的广播数据
-            ScanRecord record = result.getScanRecord();
-            if (record != null) {
-                try {
-                    Log.e(TAG, "onScanResult ScanRecord = " + record.toString());
-                    if (mOnReceiveCallback != null) {
-                        mOnReceiveCallback.onReceive(record);
-                    }
-                } catch (Exception e) {
-                }
-            }
-        }
-
-        @Override
-        public void onScanFailed(int errorCode) {
-            super.onScanFailed(errorCode);
-            Log.e(TAG, "onScanFailed Scan failed with error: " + errorCode);
-            MyToastUtils.showShortToast("扫描失败");
-        }
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void startScanningWithServiceUuid() {
+        startScanning(mServiceUuid);
     }
 
     /**
@@ -447,13 +481,8 @@ public class BleAdvertisingModel {
         return parsedAd;
     }
 
-
-    public void setOnReceiveCallback(OnReceiveCallback onReceiveCallback) {
-        mOnReceiveCallback = onReceiveCallback;
-    }
-
-    public interface OnReceiveCallback {
-        void onReceive(ScanRecord record);
+    public void setScanCallback(ScanCallback scanCallback) {
+        mScanCallback = scanCallback;
     }
 
     public class BleAvertisingSettings {
@@ -541,25 +570,5 @@ public class BleAdvertisingModel {
 
     private static ParcelUuid getParcelUuid(String uuid16Bit) {
         return ParcelUuid.fromString("0000" + uuid16Bit + "-0000-1000-8000-00805F9B34FB");
-    }
-
-    public static ParcelUuid getAdvertiseServiceUuid() {
-        return ADVERTISE_SERVICE_UUID;
-    }
-
-    public static ParcelUuid getAdvertiserServiceDataUuid() {
-        return ADVERTISER_SERVICE_DATA_UUID;
-    }
-
-    public static ParcelUuid getScanResponseServiceUuid() {
-        return SCAN_RESPONSE_SERVICE_UUID;
-    }
-
-    public static ParcelUuid getScanResponseServiceDataUuid() {
-        return SCAN_RESPONSE_SERVICE_DATA_UUID;
-    }
-
-    public static int getManufacturerId() {
-        return MANUFACTURER_ID;
     }
 }

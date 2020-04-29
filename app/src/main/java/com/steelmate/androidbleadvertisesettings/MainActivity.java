@@ -3,12 +3,15 @@ package com.steelmate.androidbleadvertisesettings;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanRecord;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -89,31 +92,52 @@ public class MainActivity extends AppCompatActivity {
                 bluetoothAdapter.enable();
             }
         }
-
-        BleAdvertisingModel.getInstance().setOnReceiveCallback(new BleAdvertisingModel.OnReceiveCallback() {
+        BleAdvertisingModel.getInstance().setScanCallback(new ScanCallback() {
             @Override
-            public void onReceive(ScanRecord record) {
-                String rawData          = AppCommonConvertUtils.bytes2HexString(record.getBytes());
-                String serviceData      = AppCommonConvertUtils.bytes2HexString(record.getServiceData(BleAdvertisingModel.getAdvertiserServiceDataUuid()));
-                String manufacturerId   = AppCommonConvertUtils.numberToHex(BleAdvertisingModel.getManufacturerId(), 2);
-                String manufacturerData = AppCommonConvertUtils.bytes2HexString(record.getManufacturerSpecificData(BleAdvertisingModel.getManufacturerId()));
-                String deviceName       = record.getDeviceName();
-                mTextViewReceive.setText("接收的原始数据:" +
-                                                 "\n" + rawData +
-                                                 "\n" + "接收的serviceData数据:" +
-                                                 "\n" + serviceData +
-                                                 "\n" + "接收的manufacturerId:" +
-                                                 "\n" + manufacturerId +
-                                                 "\n" + "接收的manufacturerData数据:" +
-                                                 "\n" + manufacturerData +
-                                                 "\n" + "接收的BLE的名称:" +
-                                                 "\n" + deviceName
-                                        );
+            public void onScanResult(int callbackType, ScanResult result) {
+                super.onScanResult(callbackType, result);
+                //扫描到的广播数据
+                ScanRecord record = result.getScanRecord();
+                if (record != null) {
+                    try {
+                        onReceiveData(record);
+                    } catch (Exception e) {
+                    }
+                }
+            }
+
+            @Override
+            public void onBatchScanResults(List<ScanResult> results) {
+                super.onBatchScanResults(results);
+            }
+
+            @Override
+            public void onScanFailed(int errorCode) {
+                super.onScanFailed(errorCode);
             }
         });
-
         checkBoxScan.setChecked(BleAdvertisingModel.getInstance().getBleAvertisingSettings().isScan());
 
+    }
+
+    private void onReceiveData(ScanRecord record) {
+        Log.e(TAG, "onScanResult ScanRecord = " + record.toString());
+        String rawData          = AppCommonConvertUtils.bytes2HexString(record.getBytes());
+        String serviceData      = AppCommonConvertUtils.bytes2HexString(record.getServiceData(BleAdvertisingModel.ADVERTISER_SERVICE_DATA_UUID));
+        String manufacturerId   = AppCommonConvertUtils.numberToHex(BleAdvertisingModel.MANUFACTURER_ID, 2);
+        String manufacturerData = AppCommonConvertUtils.bytes2HexString(record.getManufacturerSpecificData(BleAdvertisingModel.MANUFACTURER_ID));
+        String deviceName       = record.getDeviceName();
+        mTextViewReceive.setText("接收的原始数据:" +
+                                         "\n" + rawData +
+                                         "\n" + "接收的serviceData数据:" +
+                                         "\n" + serviceData +
+                                         "\n" + "接收的manufacturerId:" +
+                                         "\n" + manufacturerId +
+                                         "\n" + "接收的manufacturerData数据:" +
+                                         "\n" + manufacturerData +
+                                         "\n" + "接收的BLE的名称:" +
+                                         "\n" + deviceName
+                                );
     }
 
     View.OnClickListener mOnClickListener = new View.OnClickListener() {
@@ -135,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 if (bytes == null) {
                     return;
                 }
-                BleAdvertisingModel.getInstance().startAdvertising(BleAdvertisingModel.getAdvertiseServiceUuid(), BleAdvertisingModel.getAdvertiserServiceDataUuid(), bytes);
+                BleAdvertisingModel.getInstance().startAdvertisingServiceData(bytes);
             }
         }
     };
