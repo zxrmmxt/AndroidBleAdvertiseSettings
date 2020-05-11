@@ -45,7 +45,7 @@ android {
         variant.outputs.all {
             // 名称_android_版本号.apk
             if (buildType.name.equals("debug")) {
-                outputFileName = "2.4GDemo_V${defaultConfig.versionName}.apk"
+                outputFileName = "蓝牙广播_V${defaultConfig.versionName}.apk"
             } else {
                 def targetVersion = variant.getMergedFlavor().getTargetSdkVersion().getApiLevel()
                 def minVersion = variant.getMergedFlavor().getMinSdkVersion().getApiLevel()
