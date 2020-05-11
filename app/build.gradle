@@ -39,6 +39,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    //打包改名
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            // 名称_android_版本号.apk
+            if (buildType.name.equals("debug")) {
+                outputFileName = "2.4GDemo_V${defaultConfig.versionName}.apk"
+            } else {
+                def targetVersion = variant.getMergedFlavor().getTargetSdkVersion().getApiLevel()
+                def minVersion = variant.getMergedFlavor().getMinSdkVersion().getApiLevel()
+                outputFileName = "蓝牙广播_${releaseTime()}_target${targetVersion}_min${minVersion}_V${defaultConfig.versionName}.apk"
+            }
+        }
+    }
 }
 
 dependencies {
@@ -48,4 +62,9 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+}
+
+// 获取当前系统时间
+static def releaseTime() {
+    return new Date().format("yyyyMMddHHmm")
 }

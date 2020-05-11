@@ -51,8 +51,8 @@ public class BleAdvertisingModel {
      * 若 16 bit UUID为xxxx，那么 128 bit UUID 为 0000xxxx-0000-1000-8000-00805F9B34FB
      * 若 32 bit UUID为xxxxxxxx，那么 128 bit UUID 为 xxxxxxxx-0000-1000-8000-00805F9B34FB
      */
-    public static final ParcelUuid ADVERTISE_SERVICE_UUID          = getParcelUuid("FFF6");
-    public static final ParcelUuid ADVERTISER_SERVICE_DATA_UUID    = getParcelUuid("FFF7");
+    public static final ParcelUuid ADVERTISE_SERVICE_UUID          = getParcelUuid("FFF7");
+    public static final ParcelUuid ADVERTISER_SERVICE_DATA_UUID    = getParcelUuid("FFF5");
     public static final ParcelUuid SCAN_RESPONSE_SERVICE_UUID      = getParcelUuid("FFF8");
     public static final ParcelUuid SCAN_RESPONSE_SERVICE_DATA_UUID = getParcelUuid("FFF9");
 
