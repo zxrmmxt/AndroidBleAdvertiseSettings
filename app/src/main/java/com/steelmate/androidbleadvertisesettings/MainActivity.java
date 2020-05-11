@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         checkBoxScan.setChecked(BleAdvertisingModel.getInstance().getBleAvertisingSettings().isScan());
-
+        BleAdvertisingModel.getInstance().startScanning();
     }
 
     private void onReceiveData(ScanRecord record) {

@@ -60,7 +60,7 @@ public class BleAdvertisingModel {
      * 厂商id，自己定义的2个字节的值
      * 如果定义成short，最高位是负数会出异常
      */
-    public static final int MANUFACTURER_ID = 0xFFF1;
+    public static final int MANUFACTURER_ID = 0xFFF6;
 
     /**
      * 1[0x03中的uuid]
@@ -326,7 +326,7 @@ public class BleAdvertisingModel {
         List<ScanFilter>   scanFilters = new ArrayList<>();
         ScanFilter.Builder builder     = new ScanFilter.Builder();
         // Comment out the below line to see all BLE devices around you
-        if (mBleAvertisingSettings.isScanFilterServiceUuid) {
+        if (mBleAvertisingSettings.isScanFilterServiceUuid()) {
             if (serviceUuid != null) {
                 builder.setServiceUuid(serviceUuid);
             }
@@ -336,7 +336,7 @@ public class BleAdvertisingModel {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private void startScanning(ParcelUuid serviceUuid) {
+    public void startScanning() {
         if (mBluetoothAdapter != null) {
             if (!mBluetoothAdapter.isEnabled()) {
                 MyToastUtils.showShortToast("蓝牙未开启");
@@ -352,20 +352,10 @@ public class BleAdvertisingModel {
         if (mBluetoothLeScanner != null) {
             mBluetoothLeScanner.stopScan(mInnerScanCallback);
             if (mBleAvertisingSettings.isScan()) {
-                mBluetoothLeScanner.startScan(buildScanFilters(serviceUuid), buildScanSettings(), mInnerScanCallback);
+                mBluetoothLeScanner.startScan(buildScanFilters(mServiceUuid), buildScanSettings(), mInnerScanCallback);
                 Log.d(TAG, "Starting Scanning");
             }
         }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startScanning() {
-        startScanning(null);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startScanningWithServiceUuid() {
-        startScanning(mServiceUuid);
     }
 
     /**
