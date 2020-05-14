@@ -117,11 +117,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         checkBoxScan.setChecked(BleAdvertisingModel.getInstance().getBleAvertisingSettings().isScan());
-        BleAdvertisingModel.getInstance().startScanning();
+        BleAdvertisingModel.getInstance().startScan();
     }
 
     private void onReceiveData(ScanRecord record) {
-        Log.e(TAG, "onScanResult ScanRecord = " + record.toString());
+        MyLogUtils.d(TAG, "onScanResult ScanRecord = " + record.toString());
         String rawData          = AppCommonConvertUtils.bytes2HexString(record.getBytes());
         String serviceData      = AppCommonConvertUtils.bytes2HexString(record.getServiceData(BleAdvertisingModel.ADVERTISER_SERVICE_DATA_UUID));
         String manufacturerId   = AppCommonConvertUtils.numberToHex(BleAdvertisingModel.MANUFACTURER_ID, 2);
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, SettingsActivity.class));
             }
             if (view == mButtonScan) {
-                BleAdvertisingModel.getInstance().startScanning();
+                BleAdvertisingModel.getInstance().startScan();
             }
             if (view == mButtonAdvertise) {
                 String hex = mEditTextSend.getText().toString().trim();

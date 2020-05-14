@@ -16,7 +16,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.ParcelUuid;
-import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
@@ -296,7 +295,7 @@ public class BleAdvertisingModel {
         @Override
         public void onStartFailure(int errorCode) {
             super.onStartFailure(errorCode);
-            Log.e(TAG, "Advertising failed ");
+            MyLogUtils.d(TAG, "Advertising start failure");
             /*if (mBluetoothLeAdvertiser != null) {
                 mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
             }*/
@@ -305,7 +304,7 @@ public class BleAdvertisingModel {
         @Override
         public void onStartSuccess(AdvertiseSettings settingsInEffect) {
             super.onStartSuccess(settingsInEffect);
-            Log.e(TAG, "Advertising successfully started");
+            MyLogUtils.d(TAG, "Advertising start success");
             /*if (mBluetoothLeAdvertiser != null) {
                 mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
             }*/
@@ -336,7 +335,7 @@ public class BleAdvertisingModel {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startScanning() {
+    public void startScan() {
         if (mBluetoothAdapter != null) {
             if (!mBluetoothAdapter.isEnabled()) {
                 MyToastUtils.showShortToast("蓝牙未开启");
@@ -353,7 +352,7 @@ public class BleAdvertisingModel {
             mBluetoothLeScanner.stopScan(mInnerScanCallback);
             if (mBleAvertisingSettings.isScan()) {
                 mBluetoothLeScanner.startScan(buildScanFilters(mServiceUuid), buildScanSettings(), mInnerScanCallback);
-                Log.d(TAG, "Starting Scanning");
+                MyLogUtils.d(TAG, "start scan");
             }
         }
     }
@@ -507,7 +506,7 @@ public class BleAdvertisingModel {
 
         public void setScanFilterServiceUuid(boolean scanFilterServiceUuid) {
             isScanFilterServiceUuid = scanFilterServiceUuid;
-            startScanning();
+            startScan();
         }
 
         public int getTxPowerLevel() {
@@ -540,7 +539,7 @@ public class BleAdvertisingModel {
 
         public void setScanMode(int scanMode) {
             this.scanMode = scanMode;
-            startScanning();
+            startScan();
         }
 
         public boolean isScan() {
@@ -549,7 +548,7 @@ public class BleAdvertisingModel {
 
         public void setScan(boolean scan) {
             isScan = scan;
-            startScanning();
+            startScan();
         }
 
     }
