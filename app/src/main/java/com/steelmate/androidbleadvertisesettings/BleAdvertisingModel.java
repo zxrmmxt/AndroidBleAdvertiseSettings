@@ -506,7 +506,6 @@ public class BleAdvertisingModel {
 
         public void setScanFilterServiceUuid(boolean scanFilterServiceUuid) {
             isScanFilterServiceUuid = scanFilterServiceUuid;
-            startScan();
         }
 
         public int getTxPowerLevel() {
@@ -539,7 +538,6 @@ public class BleAdvertisingModel {
 
         public void setScanMode(int scanMode) {
             this.scanMode = scanMode;
-            startScan();
         }
 
         public boolean isScan() {

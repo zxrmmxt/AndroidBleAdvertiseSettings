@@ -117,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         checkBoxScan.setChecked(BleAdvertisingModel.getInstance().getBleAvertisingSettings().isScan());
-        BleAdvertisingModel.getInstance().startScan();
     }
 
     private void onReceiveData(ScanRecord record) {
@@ -146,9 +145,6 @@ public class MainActivity extends AppCompatActivity {
         public void onClick(View view) {
             if (view == mButtonSettings) {
                 startActivity(new Intent(MainActivity.this, SettingsActivity.class));
-            }
-            if (view == mButtonScan) {
-                BleAdvertisingModel.getInstance().startScan();
             }
             if (view == mButtonAdvertise) {
                 String hex = mEditTextSend.getText().toString().trim();
