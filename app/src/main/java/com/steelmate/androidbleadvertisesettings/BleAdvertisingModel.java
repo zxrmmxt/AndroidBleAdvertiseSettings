@@ -1,6 +1,8 @@
 package com.steelmate.androidbleadvertisesettings;
 
+import android.Manifest;
 import android.app.Activity;
+import android.app.Application;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.AdvertiseCallback;
@@ -14,10 +16,13 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.ParcelUuid;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -61,13 +66,14 @@ public class BleAdvertisingModel {
      */
     public static final int MANUFACTURER_ID = 0xFFF6;
 
+    private Application mApplication;
     /**
      * 1[0x03中的uuid]
      * 2[扫描过滤的uuid]
      */
-    private ParcelUuid mServiceUuid;
-    private ParcelUuid mServiceDataUuid;
-    private int        mManufacturerId;
+    private ParcelUuid  mServiceUuid;
+    private ParcelUuid  mServiceDataUuid;
+    private int         mManufacturerId;
 
     private SampleAdvertiseCallback mAdvertiseCallback = new SampleAdvertiseCallback();
     private BluetoothLeAdvertiser   mBluetoothLeAdvertiser;
@@ -117,7 +123,8 @@ public class BleAdvertisingModel {
     /**
      * 此方法是初始化方法，在{@link android.app.Application#onCreate}方法中调用
      */
-    public void init(ParcelUuid serviceUuid, ParcelUuid serviceDataUuid, int manufacturerId) {
+    public void init(Application application, ParcelUuid serviceUuid, ParcelUuid serviceDataUuid, int manufacturerId) {
+        mApplication = application;
         mServiceUuid = serviceUuid;
         mServiceDataUuid = serviceDataUuid;
         mManufacturerId = manufacturerId;
@@ -336,9 +343,15 @@ public class BleAdvertisingModel {
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void startScan() {
+        if (!isGranted(new String[]{
+                Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION})) {
+            return;
+        }
+        if (!isLocationOpen()) {
+            return;
+        }
         if (mBluetoothAdapter != null) {
             if (!mBluetoothAdapter.isEnabled()) {
-                MyToastUtils.showShortToast("蓝牙未开启");
                 return;
             }
         }
@@ -557,5 +570,29 @@ public class BleAdvertisingModel {
 
     private static ParcelUuid getParcelUuid(String uuid16Bit) {
         return ParcelUuid.fromString("0000" + uuid16Bit + "-0000-1000-8000-00805F9B34FB");
+    }
+
+    private boolean isGranted(final String... permissions) {
+        for (String permission : permissions) {
+            if (!isGranted(permission)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isGranted(final String permission) {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+                || PackageManager.PERMISSION_GRANTED
+                == ContextCompat.checkSelfPermission(mApplication, permission);
+    }
+
+    private boolean isLocationOpen() {
+        LocationManager locationManager = (LocationManager) mApplication.getSystemService(Context.LOCATION_SERVICE);
+        // 通过GPS卫星定位，定位级别可以精确到街（通过24颗卫星定位，在室外和空旷的地方定位准确、速度快）
+        boolean gps = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        // 通过WLAN或移动网络(3G/2G)确定的位置（也称作AGPS，辅助GPS定位。主要用于在室内或遮盖物（建筑群或茂密的深林等）密集的地方定位）
+        boolean network = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        return gps || network;
     }
 }
