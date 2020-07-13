@@ -181,10 +181,10 @@ public class BleAdvertisingModel {
                 return;
             }
             //如果芯片组支持多广播，则返回true
-            if (!mBluetoothAdapter.isMultipleAdvertisementSupported()) {
+            /*if (!mBluetoothAdapter.isMultipleAdvertisementSupported()) {
                 MyToastUtils.showShortToast("该手机芯片不支持广播");
                 return;
-            }
+            }*/
         }
         if (mBluetoothLeAdvertiser == null) {
             if (mBluetoothAdapter != null) {
