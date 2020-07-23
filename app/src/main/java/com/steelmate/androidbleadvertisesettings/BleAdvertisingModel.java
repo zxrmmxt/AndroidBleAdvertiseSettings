@@ -507,7 +507,7 @@ public class BleAdvertisingModel {
         /**
          * 扫描广播的频率
          */
-        private int     scanMode                = AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY;
+        private int     scanMode                = ScanSettings.SCAN_MODE_LOW_LATENCY;
         /**
          * 是否扫描
          */
@@ -594,5 +594,14 @@ public class BleAdvertisingModel {
         // 通过WLAN或移动网络(3G/2G)确定的位置（也称作AGPS，辅助GPS定位。主要用于在室内或遮盖物（建筑群或茂密的深林等）密集的地方定位）
         boolean network = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
         return gps || network;
+    }
+
+    /**
+     * 判断是否有BLE功能
+     *
+     * @return
+     */
+    public boolean hasBleFeature() {
+        return mApplication.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
     }
 }
