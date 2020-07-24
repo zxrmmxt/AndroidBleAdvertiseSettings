@@ -343,8 +343,7 @@ public class BleAdvertisingModel {
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void startScan() {
-        if (!isGranted(new String[]{
-                Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION})) {
+        if (!isGranted(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)) {
             return;
         }
         if (!isLocationOpen()) {
@@ -367,6 +366,21 @@ public class BleAdvertisingModel {
                 mBluetoothLeScanner.startScan(buildScanFilters(mServiceUuid), buildScanSettings(), mInnerScanCallback);
                 MyLogUtils.d(TAG, "start scan");
             }
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void stopScan() {
+        if (!isEnabled()) {
+            return;
+        }
+        if (mBluetoothLeScanner == null) {
+            if (mBluetoothAdapter != null) {
+                mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
+            }
+        }
+        if (mBluetoothLeScanner != null) {
+            mBluetoothLeScanner.stopScan(mScanCallback);
         }
     }
 
