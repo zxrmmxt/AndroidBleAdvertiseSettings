@@ -182,7 +182,7 @@ public class BleAdvertisingModel {
             }
             //如果芯片组支持多广播，则返回true
             /*if (!mBluetoothAdapter.isMultipleAdvertisementSupported()) {
-                MyToastUtils.showShortToast("该手机芯片不支持广播");
+                MyToastUtils.showShortToast("该手机芯片不支持多广播");
                 return;
             }*/
         }
@@ -191,7 +191,9 @@ public class BleAdvertisingModel {
                 mBluetoothLeAdvertiser = mBluetoothAdapter.getBluetoothLeAdvertiser();
             }
         }
-        if (mBluetoothLeAdvertiser != null) {
+        if (mBluetoothLeAdvertiser == null) {
+            MyToastUtils.showShortToast("Bluetooth LE Advertising is not supported on this device");
+        } else {
             mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
             mBluetoothLeAdvertiser.startAdvertising(buildAdvertiseSettings(), advertiseData, scanResponse, mAdvertiseCallback);
         }
