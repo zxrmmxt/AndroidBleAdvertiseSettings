@@ -35,14 +35,14 @@ import java.util.UUID;
  */
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class BleAdvertisingModel {
-    private static final String              TAG                     = BleAdvertisingModel.class.getSimpleName();
-    private static       BleAdvertisingModel sBleAdvertisingModel;
+    private static final String TAG = BleAdvertisingModel.class.getSimpleName();
+    private static BleAdvertisingModel sBleAdvertisingModel;
     /**
      * 00001000-0000-1000-8000-00805F9B34FB
      * 0000100A-0000-1000-8000-00805F9B34FB
      * 广为人知的uuid
      */
-    private static final ParcelUuid          SERVICE_UUID_WELL_KNOWN = ParcelUuid.fromString("00001000-0000-1000-8000-00805F9B34FB");
+    private static final ParcelUuid SERVICE_UUID_WELL_KNOWN = ParcelUuid.fromString("00001000-0000-1000-8000-00805F9B34FB");
 
     /**
      * 蓝牙广播中对服务 UUID 格式定义都有三种 16 bit UUID、32 bit UUID、128 bit UUID。
@@ -55,9 +55,9 @@ public class BleAdvertisingModel {
      * 若 16 bit UUID为xxxx，那么 128 bit UUID 为 0000xxxx-0000-1000-8000-00805F9B34FB
      * 若 32 bit UUID为xxxxxxxx，那么 128 bit UUID 为 xxxxxxxx-0000-1000-8000-00805F9B34FB
      */
-    public static final ParcelUuid ADVERTISE_SERVICE_UUID          = getParcelUuid("FFF7");
-    public static final ParcelUuid ADVERTISER_SERVICE_DATA_UUID    = getParcelUuid("FFF5");
-    public static final ParcelUuid SCAN_RESPONSE_SERVICE_UUID      = getParcelUuid("FFF8");
+    public static final ParcelUuid ADVERTISE_SERVICE_UUID = getParcelUuid("FFF7");
+    public static final ParcelUuid ADVERTISER_SERVICE_DATA_UUID = getParcelUuid("FFF5");
+    public static final ParcelUuid SCAN_RESPONSE_SERVICE_UUID = getParcelUuid("FFF8");
     public static final ParcelUuid SCAN_RESPONSE_SERVICE_DATA_UUID = getParcelUuid("FFF9");
 
     /**
@@ -71,14 +71,14 @@ public class BleAdvertisingModel {
      * 1[0x03中的uuid]
      * 2[扫描过滤的uuid]
      */
-    private ParcelUuid  mServiceUuid;
-    private ParcelUuid  mServiceDataUuid;
-    private int         mManufacturerId;
+    private ParcelUuid mServiceUuid;
+    private ParcelUuid mServiceDataUuid;
+    private int mManufacturerId;
 
     private SampleAdvertiseCallback mAdvertiseCallback = new SampleAdvertiseCallback();
-    private BluetoothLeAdvertiser   mBluetoothLeAdvertiser;
-    private BluetoothLeScanner      mBluetoothLeScanner;
-    private ScanCallback            mInnerScanCallback = new ScanCallback() {
+    private BluetoothLeAdvertiser mBluetoothLeAdvertiser;
+    private BluetoothLeScanner mBluetoothLeScanner;
+    private ScanCallback mInnerScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
@@ -100,17 +100,22 @@ public class BleAdvertisingModel {
             super.onScanFailed(errorCode);
         }
     };
-    private ScanCallback            mScanCallback;
+    private ScanCallback mScanCallback;
 
     private BleAvertisingSettings mBleAvertisingSettings = new BleAvertisingSettings();
-    private BluetoothAdapter      mBluetoothAdapter;
+    private BluetoothAdapter mBluetoothAdapter;
 
 
     private BleAdvertisingModel() {
         BluetoothManager bluetoothManager = (BluetoothManager) AppCommonContextUtils.getApp().getSystemService(Context.BLUETOOTH_SERVICE);
-        if (bluetoothManager != null) {
-            mBluetoothAdapter = bluetoothManager.getAdapter();
+        if (bluetoothManager == null) {
+            return;
         }
+        mBluetoothAdapter = bluetoothManager.getAdapter();
+        if (mBluetoothAdapter == null) {
+            return;
+        }
+        mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
     }
 
     public static BleAdvertisingModel getInstance() {
@@ -331,8 +336,8 @@ public class BleAdvertisingModel {
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private List<ScanFilter> buildScanFilters(ParcelUuid serviceUuid) {
-        List<ScanFilter>   scanFilters = new ArrayList<>();
-        ScanFilter.Builder builder     = new ScanFilter.Builder();
+        List<ScanFilter> scanFilters = new ArrayList<>();
+        ScanFilter.Builder builder = new ScanFilter.Builder();
         // Comment out the below line to see all BLE devices around you
         if (mBleAvertisingSettings.isScanFilterServiceUuid()) {
             if (serviceUuid != null) {
@@ -351,24 +356,24 @@ public class BleAdvertisingModel {
         if (!isLocationOpen()) {
             return;
         }
-        if (mBluetoothAdapter != null) {
-            if (!mBluetoothAdapter.isEnabled()) {
-                return;
-            }
+        if (mBluetoothAdapter == null) {
+            return;
+        }
+        if (!mBluetoothAdapter.isEnabled()) {
+            return;
+        }
+        if (mBluetoothLeScanner == null) {
+            return;
         }
 
-        if (mBluetoothLeScanner == null) {
-            if (mBluetoothAdapter != null) {
-                mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
-            }
+        mBluetoothLeScanner.stopScan(mInnerScanCallback);
+
+        if (!mBleAvertisingSettings.isScan()) {
+            return;
         }
-        if (mBluetoothLeScanner != null) {
-            mBluetoothLeScanner.stopScan(mInnerScanCallback);
-            if (mBleAvertisingSettings.isScan()) {
-                mBluetoothLeScanner.startScan(buildScanFilters(mServiceUuid), buildScanSettings(), mInnerScanCallback);
-                MyLogUtils.d(TAG, "start scan");
-            }
-        }
+
+        mBluetoothLeScanner.startScan(buildScanFilters(mServiceUuid), buildScanSettings(), mInnerScanCallback);
+        MyLogUtils.d(TAG, "start scan");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -377,13 +382,9 @@ public class BleAdvertisingModel {
             return;
         }
         if (mBluetoothLeScanner == null) {
-            if (mBluetoothAdapter != null) {
-                mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
-            }
+            return;
         }
-        if (mBluetoothLeScanner != null) {
-            mBluetoothLeScanner.stopScan(mScanCallback);
-        }
+        mBluetoothLeScanner.stopScan(mScanCallback);
     }
 
     /**
@@ -511,23 +512,23 @@ public class BleAdvertisingModel {
         /**
          * 发送广播的功率
          */
-        private int     txPowerLevel            = AdvertiseSettings.ADVERTISE_TX_POWER_HIGH;
+        private int txPowerLevel = AdvertiseSettings.ADVERTISE_TX_POWER_HIGH;
         /**
          * 发送广播的持续时间
          */
-        private int     timeoutMillis           = 50 * 100;
+        private int timeoutMillis = 50 * 100;
         /**
          * 发送广播的频率
          */
-        private int     advertiseMode           = AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY;
+        private int advertiseMode = AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY;
         /**
          * 扫描广播的频率
          */
-        private int     scanMode                = ScanSettings.SCAN_MODE_LOW_LATENCY;
+        private int scanMode = ScanSettings.SCAN_MODE_LOW_LATENCY;
         /**
          * 是否扫描
          */
-        private boolean isScan                  = true;
+        private boolean isScan = true;
 
         public boolean isScanFilterServiceUuid() {
             return isScanFilterServiceUuid;
