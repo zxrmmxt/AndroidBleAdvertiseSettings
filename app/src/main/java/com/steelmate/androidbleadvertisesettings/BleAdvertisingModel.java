@@ -42,7 +42,7 @@ public class BleAdvertisingModel {
      * 0000100A-0000-1000-8000-00805F9B34FB
      * 广为人知的uuid
      */
-    private static final ParcelUuid SERVICE_UUID_WELL_KNOWN = ParcelUuid.fromString("00001000-0000-1000-8000-00805F9B34FB");
+    private static final ParcelUuid SERVICE_UUID_WELL_KNOWN = getParcelUuid("1000");
 
     /**
      * 蓝牙广播中对服务 UUID 格式定义都有三种 16 bit UUID、32 bit UUID、128 bit UUID。
