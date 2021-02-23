@@ -22,6 +22,9 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.blankj.utilcode.util.ConvertUtils;
+import com.blankj.utilcode.util.Utils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         }
         AppCommonPermissionsUtils.requestPermissions(this, mPerms, 1);
 
-        BluetoothManager bluetoothManager = (BluetoothManager) AppCommonContextUtils.getApp().getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothManager bluetoothManager = (BluetoothManager) Utils.getApp().getSystemService(Context.BLUETOOTH_SERVICE);
         if (bluetoothManager != null) {
             BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
             if (!bluetoothAdapter.isEnabled()) {
@@ -125,10 +128,10 @@ public class MainActivity extends AppCompatActivity {
         }
         try {
             MyLogUtils.d(TAG, "onScanResult ScanRecord = " + record.toString());
-            String rawData          = AppCommonConvertUtils.bytes2HexString(record.getBytes());
-            String serviceData      = AppCommonConvertUtils.bytes2HexString(record.getServiceData(BleAdvertisingModel.ADVERTISER_SERVICE_DATA_UUID));
+            String rawData          = ConvertUtils.bytes2HexString(record.getBytes());
+            String serviceData      = ConvertUtils.bytes2HexString(record.getServiceData(BleAdvertisingModel.ADVERTISER_SERVICE_DATA_UUID));
             String manufacturerId   = AppCommonConvertUtils.numberToHex(BleAdvertisingModel.MANUFACTURER_ID, 2);
-            String manufacturerData = AppCommonConvertUtils.bytes2HexString(record.getManufacturerSpecificData(BleAdvertisingModel.MANUFACTURER_ID));
+            String manufacturerData = ConvertUtils.bytes2HexString(record.getManufacturerSpecificData(BleAdvertisingModel.MANUFACTURER_ID));
             String deviceName       = record.getDeviceName();
             mTextViewReceive.setText("接收的原始数据:" +
                                              "\n" + rawData +

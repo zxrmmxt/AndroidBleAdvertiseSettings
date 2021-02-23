@@ -14,7 +14,6 @@ public class MyApp extends Application {
     public void onCreate() {
         super.onCreate();
         Utils.init(this);
-        AppCommonContextUtils.init(this);
 
         BleAdvertisingModel.getInstance().init(this, BleAdvertisingModel.ADVERTISE_SERVICE_UUID, BleAdvertisingModel.ADVERTISER_SERVICE_DATA_UUID, BleAdvertisingModel.MANUFACTURER_ID);
 

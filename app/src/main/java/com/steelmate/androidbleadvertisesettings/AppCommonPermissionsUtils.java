@@ -8,6 +8,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.blankj.utilcode.util.Utils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class AppCommonPermissionsUtils {
     private static String[] getNotGrantedPermissions(List<String> permissions) {
         ArrayList<String> per = new ArrayList<>();
         for (String permission : permissions) {
-            if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(AppCommonContextUtils.getApp(), permission)) {
+            if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(Utils.getApp(), permission)) {
                 per.add(permission);
             }
         }

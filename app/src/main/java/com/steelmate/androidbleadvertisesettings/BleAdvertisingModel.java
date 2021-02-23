@@ -24,6 +24,9 @@ import android.os.ParcelUuid;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import com.blankj.utilcode.util.ToastUtils;
+import com.blankj.utilcode.util.Utils;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -77,7 +80,6 @@ public class BleAdvertisingModel {
 
     private SampleAdvertiseCallback mAdvertiseCallback = new SampleAdvertiseCallback();
     private BluetoothLeAdvertiser mBluetoothLeAdvertiser;
-    private BluetoothLeScanner mBluetoothLeScanner;
     private ScanCallback mInnerScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
@@ -103,19 +105,25 @@ public class BleAdvertisingModel {
     private ScanCallback mScanCallback;
 
     private BleAvertisingSettings mBleAvertisingSettings = new BleAvertisingSettings();
-    private BluetoothAdapter mBluetoothAdapter;
 
 
     private BleAdvertisingModel() {
-        BluetoothManager bluetoothManager = (BluetoothManager) AppCommonContextUtils.getApp().getSystemService(Context.BLUETOOTH_SERVICE);
+    }
+
+    public BluetoothAdapter getBluetoothAdapter() {
+        BluetoothManager bluetoothManager = (BluetoothManager) Utils.getApp().getSystemService(Context.BLUETOOTH_SERVICE);
         if (bluetoothManager == null) {
-            return;
+            return null;
         }
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-        if (mBluetoothAdapter == null) {
-            return;
+        return bluetoothManager.getAdapter();
+    }
+
+    public BluetoothLeScanner getBluetoothLeScanner() {
+        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
+        if (bluetoothAdapter == null) {
+            return null;
         }
-        mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
+        return bluetoothAdapter.getBluetoothLeScanner();
     }
 
     public static BleAdvertisingModel getInstance() {
@@ -126,7 +134,7 @@ public class BleAdvertisingModel {
     }
 
     /**
-     * 此方法是初始化方法，在{@link android.app.Application#onCreate}方法中调用
+     * 此方法是初始化方法，在{@link Application#onCreate}方法中调用
      */
     public void init(Application application, ParcelUuid serviceUuid, ParcelUuid serviceDataUuid, int manufacturerId) {
         mApplication = application;
@@ -136,20 +144,23 @@ public class BleAdvertisingModel {
     }
 
     public void enable(Activity activity, int requestCode) {
-        if (mBluetoothAdapter != null) {
-            if (!mBluetoothAdapter.isEnabled()) {
-                Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                activity.startActivityForResult(intent, requestCode);
-            }
+        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
+        if (bluetoothAdapter == null) {
+            return;
         }
+        if (bluetoothAdapter.isEnabled()) {
+            return;
+        }
+        Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        activity.startActivityForResult(intent, requestCode);
     }
 
     public boolean isEnabled() {
-        if (mBluetoothAdapter != null) {
-            return mBluetoothAdapter.isEnabled();
-        } else {
+        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
+        if (bluetoothAdapter == null) {
             return false;
         }
+        return bluetoothAdapter.isEnabled();
     }
 
     /**
@@ -180,28 +191,31 @@ public class BleAdvertisingModel {
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void startAdvertising(AdvertiseData advertiseData, AdvertiseData scanResponse) {
-        if (mBluetoothAdapter != null) {
-            if (!mBluetoothAdapter.isEnabled()) {
-                MyToastUtils.showShortToast("蓝牙未开启");
-                return;
-            }
+        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
+        if (bluetoothAdapter == null) {
             //如果芯片组支持多广播，则返回true
             /*if (!mBluetoothAdapter.isMultipleAdvertisementSupported()) {
                 MyToastUtils.showShortToast("该手机芯片不支持多广播");
                 return;
             }*/
+            return;
+        }
+
+        if (!bluetoothAdapter.isEnabled()) {
+            ToastUtils.showShort("蓝牙未开启");
+            return;
+        }
+
+        if (mBluetoothLeAdvertiser == null) {
+            mBluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
         }
         if (mBluetoothLeAdvertiser == null) {
-            if (mBluetoothAdapter != null) {
-                mBluetoothLeAdvertiser = mBluetoothAdapter.getBluetoothLeAdvertiser();
-            }
+            ToastUtils.showShort("Bluetooth LE Advertising is not supported on this device");
+            return;
         }
-        if (mBluetoothLeAdvertiser == null) {
-            MyToastUtils.showShortToast("Bluetooth LE Advertising is not supported on this device");
-        } else {
-            mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
-            mBluetoothLeAdvertiser.startAdvertising(buildAdvertiseSettings(), advertiseData, scanResponse, mAdvertiseCallback);
-        }
+
+        mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
+        mBluetoothLeAdvertiser.startAdvertising(buildAdvertiseSettings(), advertiseData, scanResponse, mAdvertiseCallback);
     }
 
     /**
@@ -281,10 +295,14 @@ public class BleAdvertisingModel {
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void startAdvertisingName(ParcelUuid serviceUuid, String name) {
+        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
+        if (bluetoothAdapter == null) {
+            return;
+        }
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
         //是否包含设备名称
         dataBuilder.setIncludeDeviceName(false);
-        mBluetoothAdapter.setName(name);
+        bluetoothAdapter.setName(name);
         //是否包含发射功率级
         dataBuilder.setIncludeTxPowerLevel(false);
         if (serviceUuid != null) {
@@ -356,23 +374,20 @@ public class BleAdvertisingModel {
         if (!isLocationOpen()) {
             return;
         }
-        if (mBluetoothAdapter == null) {
-            return;
-        }
-        if (!mBluetoothAdapter.isEnabled()) {
-            return;
-        }
-        if (mBluetoothLeScanner == null) {
+
+        BluetoothLeScanner bluetoothLeScanner = getBluetoothLeScanner();
+
+        if (bluetoothLeScanner == null) {
             return;
         }
 
-        mBluetoothLeScanner.stopScan(mInnerScanCallback);
+        bluetoothLeScanner.stopScan(mInnerScanCallback);
 
         if (!mBleAvertisingSettings.isScan()) {
             return;
         }
 
-        mBluetoothLeScanner.startScan(buildScanFilters(mServiceUuid), buildScanSettings(), mInnerScanCallback);
+        bluetoothLeScanner.startScan(buildScanFilters(mServiceUuid), buildScanSettings(), mInnerScanCallback);
         MyLogUtils.d(TAG, "start scan");
     }
 
@@ -381,10 +396,14 @@ public class BleAdvertisingModel {
         if (!isEnabled()) {
             return;
         }
-        if (mBluetoothLeScanner == null) {
+
+        BluetoothLeScanner bluetoothLeScanner = getBluetoothLeScanner();
+
+        if (bluetoothLeScanner == null) {
             return;
         }
-        mBluetoothLeScanner.stopScan(mScanCallback);
+
+        bluetoothLeScanner.stopScan(mScanCallback);
     }
 
     /**
