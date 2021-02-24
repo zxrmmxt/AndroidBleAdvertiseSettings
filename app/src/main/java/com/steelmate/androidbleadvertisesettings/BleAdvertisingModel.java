@@ -545,7 +545,7 @@ public class BleAdvertisingModel {
         /**
          * 扫描时是否过滤serviceUUID
          */
-        private boolean isScanFilterServiceUuid = true;
+        private boolean isScanFilterServiceUuid = false;
         /**
          * 发送广播的功率
          */
