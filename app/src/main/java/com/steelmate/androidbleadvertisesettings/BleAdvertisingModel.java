@@ -79,7 +79,6 @@ public class BleAdvertisingModel {
     private int mManufacturerId;
 
     private SampleAdvertiseCallback mAdvertiseCallback = new SampleAdvertiseCallback();
-    private BluetoothLeAdvertiser mBluetoothLeAdvertiser;
     private ScanCallback mInnerScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
@@ -124,6 +123,14 @@ public class BleAdvertisingModel {
             return null;
         }
         return bluetoothAdapter.getBluetoothLeScanner();
+    }
+
+    public BluetoothLeAdvertiser getBluetoothLeAdvertiser() {
+        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
+        if (bluetoothAdapter == null) {
+            return null;
+        }
+        return bluetoothAdapter.getBluetoothLeAdvertiser();
     }
 
     public static BleAdvertisingModel getInstance() {
@@ -206,16 +213,14 @@ public class BleAdvertisingModel {
             return;
         }
 
-        if (mBluetoothLeAdvertiser == null) {
-            mBluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
-        }
-        if (mBluetoothLeAdvertiser == null) {
+        BluetoothLeAdvertiser bluetoothLeAdvertiser = getBluetoothLeAdvertiser();
+        if (bluetoothLeAdvertiser == null) {
             ToastUtils.showShort("Bluetooth LE Advertising is not supported on this device");
             return;
         }
 
-        mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
-        mBluetoothLeAdvertiser.startAdvertising(buildAdvertiseSettings(), advertiseData, scanResponse, mAdvertiseCallback);
+        bluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
+        bluetoothLeAdvertiser.startAdvertising(buildAdvertiseSettings(), advertiseData, scanResponse, mAdvertiseCallback);
     }
 
     /**
@@ -319,6 +324,19 @@ public class BleAdvertisingModel {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void startAdvertisingName(String name) {
         startAdvertisingName(null, name);
+    }
+
+    public void stopAdvertising() {
+        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
+        if (bluetoothAdapter == null) {
+            return;
+        }
+        BluetoothLeAdvertiser bluetoothLeAdvertiser = getBluetoothLeAdvertiser();
+        if (bluetoothLeAdvertiser == null) {
+            return;
+        }
+
+        bluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
