@@ -2,9 +2,13 @@ package com.steelmate.androidbleadvertisesettings;
 
 import android.app.Activity;
 import android.app.Application;
+import android.bluetooth.le.ScanFilter;
 
 import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.Utils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author xt on 2019/11/21 14:48
@@ -20,7 +24,9 @@ public class MyApp extends Application {
         AppUtils.registerAppStatusChangedListener(new Utils.OnAppStatusChangedListener() {
             @Override
             public void onForeground(Activity activity) {
-                BleAdvertisingModel.getInstance().startScan();
+                List<ScanFilter.Builder> builderList = new ArrayList<>();
+                builderList.add(new ScanFilter.Builder().setServiceUuid(BleAdvertisingModel.getInstance().getServiceUuid()));
+                BleAdvertisingModel.getInstance().startBleScan(builderList);
             }
 
             @Override

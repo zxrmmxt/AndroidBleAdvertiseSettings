@@ -384,29 +384,37 @@ public class BleAdvertisingModel {
         return scanFilters;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void startScan() {
+    public void startBleScan() {
+        startBleScan(null);
+    }
+
+    public void startBleScan(List<ScanFilter.Builder> builderList) {
+        List<ScanFilter> scanFilters = new ArrayList<>();
+        if (builderList != null) {
+            for (ScanFilter.Builder builder : builderList) {
+                scanFilters.add(builder.build());
+            }
+        }
         if (!isGranted(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)) {
             return;
         }
         if (!isLocationOpen()) {
             return;
         }
-
+        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
+        if (bluetoothAdapter == null) {
+            return;
+        }
+        if (!bluetoothAdapter.isEnabled()) {
+            return;
+        }
         BluetoothLeScanner bluetoothLeScanner = getBluetoothLeScanner();
-
         if (bluetoothLeScanner == null) {
             return;
         }
 
         bluetoothLeScanner.stopScan(mInnerScanCallback);
-
-        if (!mBleAvertisingSettings.isScan()) {
-            return;
-        }
-
-        bluetoothLeScanner.startScan(buildScanFilters(mServiceUuid), buildScanSettings(), mInnerScanCallback);
-        MyLogUtils.d(TAG, "start scan");
+        bluetoothLeScanner.startScan(scanFilters, buildScanSettings(), mInnerScanCallback);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -613,7 +621,9 @@ public class BleAdvertisingModel {
 
         public void setScan(boolean scan) {
             isScan = scan;
-            startScan();
+            List<ScanFilter.Builder> builderList = new ArrayList<>();
+            builderList.add(new ScanFilter.Builder().setServiceUuid(BleAdvertisingModel.getInstance().getServiceUuid()));
+            startBleScan(builderList);
         }
 
     }
@@ -657,5 +667,9 @@ public class BleAdvertisingModel {
      */
     public boolean hasBleFeature() {
         return mApplication.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
+    }
+
+    public ParcelUuid getServiceUuid() {
+        return mServiceUuid;
     }
 }
