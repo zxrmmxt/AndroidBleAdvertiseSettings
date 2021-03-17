@@ -621,9 +621,6 @@ public class BleAdvertisingModel {
 
         public void setScan(boolean scan) {
             isScan = scan;
-            List<ScanFilter.Builder> builderList = new ArrayList<>();
-            builderList.add(new ScanFilter.Builder().setServiceUuid(BleAdvertisingModel.getInstance().getServiceUuid()));
-            startBleScan(builderList);
         }
 
     }
